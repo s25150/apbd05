@@ -1,5 +1,6 @@
 using apbd05.Context;
 using apbd05.Models;
+using apbd05.RequestModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,50 +21,67 @@ public class TripsController : ControllerBase
         return Ok(tripsDesc);
     }
     
-    /*[HttpGet("{id:int}")]
-    public IActionResult GetStudent(int id)
-    {
-        var student = _students.FirstOrDefault(st => st.IdStudent == id);
-        if (student == null)
-        {
-            return NotFound($"Student with id {id} was not found");
-        }
-        
-        return Ok(student);
-    }
     
-    [HttpPost]
-    public IActionResult CreateStudent(Student student)
+    [HttpPost("{idTrip:int}/clients")]
+    public async Task<IActionResult> AssignClientToTrip(int idTrip)
     {
-        _students.Add(student);
-        return StatusCode(StatusCodes.Status201Created);
-    }
-    
-    [HttpPut("{id:int}")]
-    public IActionResult UpdateStudent(int id, Student student)
-    {
-        var studentToEdit= _students.FirstOrDefault(s => s.IdStudent == id);
+        var dbContext = new Apbd05Context();
 
-        if (studentToEdit == null)
+        var clientToTrip = new AssignClientRequest()
         {
-            return NotFound($"Student with id {id} was not found");
-        }
-        
-        _students.Remove(studentToEdit);
-        _students.Add(student);
-        return NoContent();
-    }
-    
-    [HttpDelete("{id:int}")]
-    public IActionResult DeleteStudent(int id)
-    {
-        var studentToEdit= _students.FirstOrDefault(s => s.IdStudent == id);
-        if (studentToEdit == null)
+            IdClient = 7,
+            FirstName = "Monika",
+            LastName = "Kolowiecka",
+            Email = "mkol@ggmail.com",
+            Telephone = "333222111",
+            Pesel = "09855314564",
+            IdTrip = idTrip,
+            TripName = "Trip to London",
+            PaymentDate = null
+        };
+
+        var clientExists = await dbContext.Clients.AnyAsync(c => c.Pesel == clientToTrip.Pesel);
+        if (!clientExists)
         {
-            return NoContent();
+            var newClient = new Client()
+            {
+                IdClient = clientToTrip.IdClient,
+                FirstName = clientToTrip.FirstName,
+                LastName = clientToTrip.LastName,
+                Email = clientToTrip.Email,
+                Telephone = clientToTrip.Telephone,
+                Pesel = clientToTrip.Pesel
+            };
+            await dbContext.Clients.AddAsync(newClient);
         }
 
-        _students.Remove(studentToEdit);
-        return NoContent();
-    }*/
+        var clientIsAssigned = await dbContext.ClientTrips.AnyAsync(c =>
+            c.IdClient == clientToTrip.IdClient && c.IdTrip == clientToTrip.IdTrip);
+        if (clientIsAssigned)
+        {
+            return BadRequest("Client is already assigned to this trip");
+        }
+
+        var tripExists =
+            await dbContext.Trips.AnyAsync(t => t.IdTrip == clientToTrip.IdTrip && t.Name == clientToTrip.TripName);
+        if (!tripExists)
+        {
+            return BadRequest("Trip with given id and name does not exist");
+        }
+
+        var clientTrip = new ClientTrip()
+        {
+            IdClient = clientToTrip.IdClient,
+            IdTrip = clientToTrip.IdTrip,
+            RegisteredAt = DateTime.Now,
+            PaymentDate = null,
+        };
+        var addClientTrip = await dbContext.ClientTrips.AddAsync(clientTrip);
+        
+        await dbContext.SaveChangesAsync();
+        
+        return Ok();
+    }
+    
+    
 }
