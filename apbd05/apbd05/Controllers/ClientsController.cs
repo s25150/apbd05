@@ -1,4 +1,5 @@
 using apbd05.Context;
+using apbd05.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,16 +14,24 @@ public class ClientsController : ControllerBase
     {
         var dbContext = new Apbd05Context();
 
+        var clientToRemove = new Client()
+        {
+            IdClient = idClient
+        };
+
+        dbContext.Clients.Attach(clientToRemove);
+        
         var hasTrips = await dbContext.ClientTrips.AnyAsync(ct => ct.IdClient == idClient);
         if (hasTrips)
         {
             return BadRequest("Cannot delete client with assigned trips.");
         }
 
-        var client = await dbContext.Clients.FindAsync(idClient);
-        dbContext.Clients.Remove(client);
+        //var client = await dbContext.Clients.FindAsync(idClient);
+        dbContext.Clients.Remove(clientToRemove);
+        
         await dbContext.SaveChangesAsync();
         
-        return NoContent();
+        return Ok();
     }
 }

@@ -16,7 +16,7 @@ public class AssignClientRequest
 
     public string Pesel { get; set; } = null!;
     
-    public int IdTrip { get; set; }
+    //public int IdTrip { get; set; }
 
     public string TripName { get; set; } = null!; //pole Name w Trip
     

@@ -6,14 +6,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace apbd05.Controllers;
 
+
 [Route("api/trips")]
 [ApiController]
 public class TripsController : ControllerBase
 {
+    
     [HttpGet]
     public async Task<IActionResult> GetTrips()
     {
         var dbContext = new Apbd05Context();
+        
         var tripsDesc = await dbContext.Trips
             .OrderByDescending(trip => trip.DateFrom)
             .ToListAsync(); //wymusza wykonanie zapytania do bazy w tym momencie
@@ -23,7 +26,7 @@ public class TripsController : ControllerBase
     
     
     [HttpPost("{idTrip:int}/clients")]
-    public async Task<IActionResult> AssignClientToTrip(AssignClientRequest acr)
+    public async Task<IActionResult> AssignClientToTrip(int idTrip, AssignClientRequest acr)
     {
         var dbContext = new Apbd05Context();
 
@@ -35,7 +38,7 @@ public class TripsController : ControllerBase
             Email = acr.Email,
             Telephone = acr.Telephone,
             Pesel = acr.Pesel,
-            IdTrip = acr.IdTrip,
+            //IdTrip = acr.IdTrip,
             TripName = acr.TripName,
             PaymentDate = acr.PaymentDate
         };
@@ -56,14 +59,14 @@ public class TripsController : ControllerBase
         }
 
         var clientIsAssigned = await dbContext.ClientTrips.AnyAsync(c =>
-            c.IdClient == clientToTrip.IdClient && c.IdTrip == clientToTrip.IdTrip);
+            c.IdClient == clientToTrip.IdClient && c.IdTrip == idTrip);
         if (clientIsAssigned)
         {
             return BadRequest("Client is already assigned to this trip");
         }
 
         var tripExists =
-            await dbContext.Trips.AnyAsync(t => t.IdTrip == clientToTrip.IdTrip && t.Name == clientToTrip.TripName);
+            await dbContext.Trips.AnyAsync(t => t.IdTrip == idTrip && t.Name == clientToTrip.TripName);
         if (!tripExists)
         {
             return BadRequest("Trip with given id and name does not exist");
@@ -72,7 +75,7 @@ public class TripsController : ControllerBase
         var clientTrip = new ClientTrip()
         {
             IdClient = clientToTrip.IdClient,
-            IdTrip = clientToTrip.IdTrip,
+            IdTrip = idTrip,
             RegisteredAt = DateTime.Now,
             PaymentDate = null,
         };
