@@ -23,21 +23,21 @@ public class TripsController : ControllerBase
     
     
     [HttpPost("{idTrip:int}/clients")]
-    public async Task<IActionResult> AssignClientToTrip(int idTrip)
+    public async Task<IActionResult> AssignClientToTrip(AssignClientRequest acr)
     {
         var dbContext = new Apbd05Context();
 
         var clientToTrip = new AssignClientRequest()
         {
-            IdClient = 7,
-            FirstName = "Monika",
-            LastName = "Kolowiecka",
-            Email = "mkol@ggmail.com",
-            Telephone = "333222111",
-            Pesel = "09855314564",
-            IdTrip = idTrip,
-            TripName = "Trip to London",
-            PaymentDate = null
+            IdClient = acr.IdClient,
+            FirstName = acr.FirstName,
+            LastName = acr.LastName,
+            Email = acr.Email,
+            Telephone = acr.Telephone,
+            Pesel = acr.Pesel,
+            IdTrip = acr.IdTrip,
+            TripName = acr.TripName,
+            PaymentDate = acr.PaymentDate
         };
 
         var clientExists = await dbContext.Clients.AnyAsync(c => c.Pesel == clientToTrip.Pesel);
